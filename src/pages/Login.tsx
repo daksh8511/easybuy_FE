@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
@@ -18,6 +18,10 @@ import {
   Tag,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import axios from 'axios'
+import NodeApi from '../NodeApi'
 
 const recentOrders = [
   { emoji: '📱', name: 'iPhone 15 Pro', status: 'Delivered', date: 'Jul 12' },
@@ -27,6 +31,51 @@ const recentOrders = [
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate()
+
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+      remember: false,
+    },
+
+    validationSchema: Yup.object({
+      email: Yup.string()
+        .email('Please enter a valid email')
+        .required('Email is required'),
+
+      password: Yup.string()
+        .min(8, 'Password must be at least 8 characters')
+        .required('Password is required'),
+    }),
+
+    onSubmit: (values) => {
+      void SignIn(values)
+    },
+  })
+
+  const SignIn = async (values: { email: string; password: string; remember: boolean }) => {
+    try {
+      const response = await NodeApi.post('/login', {
+        email: values.email,
+        password: values.password,
+      })
+
+      if (response.data?.success) {
+        console.log(response?.data)
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response?.data?.user))
+        navigate('/')
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error(error.response?.data || error.message)
+      } else {
+        console.error(error)
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden px-4 py-20">
@@ -92,54 +141,91 @@ const Login = () => {
             <p className="text-zinc-500 text-sm mt-1">Continue shopping and track your orders.</p>
           </CardHeader>
 
-          <CardContent className="px-8 py-6 space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm text-zinc-300 font-medium">Email Address</Label>
-              <div className="relative">
-                <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-                <Input id="email" type="email" placeholder="you@example.com" className="pl-9 bg-black border-white/10 text-white placeholder:text-zinc-500 h-11" />
+          <form onSubmit={formik?.handleSubmit}>
+            <CardContent className="px-8 py-6 space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm text-zinc-300 font-medium">Email Address</Label>
+                <div className="relative">
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="pl-9 bg-black border-white/10 text-white placeholder:text-zinc-500 h-11"
+                  />
+                  {formik.touched.email && formik.errors.email && (
+                    <p className="text-red-500 text-xs">
+                      {formik.errors.email}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm text-zinc-300 font-medium">Password</Label>
-                <a href="#" className="text-xs text-zinc-400 hover:text-white transition-colors">Forgot password?</a>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm text-zinc-300 font-medium">Password</Label>
+                  <a href="#" className="text-xs text-zinc-400 hover:text-white transition-colors">Forgot password?</a>
+                </div>
+                <div className="relative">
+                  <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="pl-9 pr-10 bg-black border-white/10 text-white placeholder:text-zinc-500 h-11"
+                  />
+                  {formik.touched.password && formik.errors.password && (
+                    <p className="text-red-500 text-xs">
+                      {formik.errors.password}
+                    </p>
+                  )}
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors">
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
               </div>
-              <div className="relative">
-                <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="pl-9 pr-10 bg-black border-white/10 text-white placeholder:text-zinc-500 h-11" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors">
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
+
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  checked={formik.values.remember}
+                  onChange={formik.handleChange}
+                  className="accent-white w-4 h-4"
+                />
+                <span className="text-sm text-zinc-500">Remember me for 30 days</span>
+              </label>
+
+              <Button type="submit" className="w-full bg-white text-black border-0 h-11 font-bold gap-2 hover:bg-zinc-200">
+                Sign In <ArrowRight size={15} />
+              </Button>
+
+              <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-600">
+                <Shield size={12} className="text-white" />
+                <span>256-bit SSL encrypted & 100% secure</span>
               </div>
-            </div>
 
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input type="checkbox" className="accent-white w-4 h-4" />
-              <span className="text-sm text-zinc-500">Remember me for 30 days</span>
-            </label>
+              <Separator className="bg-white/10" />
 
-            <Button type="submit" className="w-full bg-white text-black border-0 h-11 font-bold gap-2 hover:bg-zinc-200">
-              Sign In <ArrowRight size={15} />
-            </Button>
+              <Button type="button" variant="outline" className="w-full border-white/15 text-zinc-300 hover:text-white hover:bg-white/10 bg-transparent h-10 gap-2 text-sm">
+                📱 Login with OTP instead
+              </Button>
 
-            <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-600">
-              <Shield size={12} className="text-white" />
-              <span>256-bit SSL encrypted & 100% secure</span>
-            </div>
+              <p className="text-center text-sm text-zinc-500">
+                New to ShopNova?{' '}
+                <Link to="/signup" className="text-white hover:text-zinc-300 font-bold transition-colors">Create an account</Link>
+              </p>
+            </CardContent>
+          </form>
 
-            <Separator className="bg-white/10" />
-
-            <Button type="button" variant="outline" className="w-full border-white/15 text-zinc-300 hover:text-white hover:bg-white/10 bg-transparent h-10 gap-2 text-sm">
-              📱 Login with OTP instead
-            </Button>
-
-            <p className="text-center text-sm text-zinc-500">
-              New to ShopNova?{' '}
-              <Link to="/signup" className="text-white hover:text-zinc-300 font-bold transition-colors">Create an account</Link>
-            </p>
-          </CardContent>
         </Card>
       </div>
     </div>
