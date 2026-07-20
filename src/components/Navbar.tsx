@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Input } from '../components/ui/input'
@@ -58,6 +58,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isLoggedIn = localStorage.getItem('token')
   const [openPopup, setOpenPopup] = useState(false)
+  const location = useLocation()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -263,21 +264,25 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10 bg-zinc-950">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-1 h-10 overflow-x-auto scrollbar-none">
-              {categories.map((cat) => (
-                <a
-                  key={cat.label}
-                  href={cat.href}
-                  className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all"
-                >
-                  {cat.icon} {cat.label}
-                </a>
-              ))}
+        {
+          location.pathname !== '/products' && (
+            <div className="border-t border-white/10 bg-zinc-950">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-1 h-10 overflow-x-auto scrollbar-none">
+                  {categories.map((cat) => (
+                    <a
+                      key={cat.label}
+                      href={cat.href}
+                      className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all"
+                    >
+                      {cat.icon} {cat.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )
+        }
       </div>
 
       {mobileOpen && (

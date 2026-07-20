@@ -1,0 +1,32 @@
+import { createBrowserRouter } from "react-router-dom";
+import App from './App'
+import ProductsPage from "./pages/ProductsPage";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import AuthRoute from "./components/AuthRoutes";
+
+export const router = createBrowserRouter([
+    {
+        path: '',
+        element: <App />,
+        children: [
+            {
+                path: '',
+                element: <Home />
+            },
+            {
+                path: 'products',
+                element: <ProductsPage />
+            }
+        ]
+    },
+    {
+        path: 'login',
+        element: <AuthRoute><Login /></AuthRoute>
+    },
+    {
+        path: 'signup',
+        element: <AuthRoute><Signup /></AuthRoute>
+    }
+])
