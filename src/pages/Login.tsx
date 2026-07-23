@@ -57,7 +57,7 @@ const Login = () => {
 
   const SignIn = async (values: { email: string; password: string; remember: boolean }) => {
     try {
-      const response = await NodeApi.post('/login', {
+      const response = await NodeApi.post('/auth/login', {
         email: values.email,
         password: values.password,
       })

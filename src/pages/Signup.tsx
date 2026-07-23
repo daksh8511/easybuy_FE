@@ -63,7 +63,7 @@ const Signup = () => {
 
     try {
       const response = await ApiNode.post(
-        "/signup",
+        "/auth/signup",
         {
           email: values?.email,
           password: values?.password,

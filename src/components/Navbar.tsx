@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
@@ -11,7 +11,6 @@ import {
   MapPin,
   Smartphone,
   Shirt,
-  Headphones,
   Home,
   Bike,
   Sparkles,
@@ -44,11 +43,11 @@ import {
   SheetTrigger,
 } from "../components/ui/sheet";
 import Profile from './Profile'
+import NodeApi from '../NodeApi'
 
 const categories = [
   { label: 'Electronics', icon: <Smartphone size={15} />, href: '#' },
   { label: 'Fashion', icon: <Shirt size={15} />, href: '#' },
-  { label: 'Audio', icon: <Headphones size={15} />, href: '#' },
   { label: 'Home & Living', icon: <Home size={15} />, href: '#' },
   { label: 'Sports', icon: <Bike size={15} />, href: '#' },
   { label: 'Beauty', icon: <Sparkles size={15} />, href: '#' },
@@ -59,6 +58,26 @@ const Navbar = () => {
   const isLoggedIn = localStorage.getItem('token')
   const [openPopup, setOpenPopup] = useState(false)
   const location = useLocation()
+  const [searchInput, setSearchInput] = useState('')
+  const [searchProducts, setSearchProducts] = useState([])
+  const hideCategoryBar =
+    location.pathname === "/products" ||
+    location.pathname.startsWith("/products/");
+
+  const SearchAPI = async () => {
+    try {
+      const response = await NodeApi.get('/product/get')
+      if (response?.data?.success) {
+        setSearchProducts(response?.data?.allProducts)
+      }
+    } catch (error) {
+      console.error('error', error)
+    }
+  }
+
+  useEffect(() => {
+    SearchAPI()
+  }, [searchInput])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -86,6 +105,7 @@ const Navbar = () => {
                 </div>
                 <Input
                   placeholder="Search products, brands, categories..."
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-9 pr-24 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-500 h-10 rounded-xl"
                 />
                 <Button size="sm" className="absolute right-1 h-8 bg-white text-black border-0 text-xs px-3 rounded-lg hover:bg-zinc-200">
@@ -124,7 +144,7 @@ const Navbar = () => {
                     </SheetTitle>
                   </SheetHeader>
 
-                  <div className="mt-6 space-y-4">
+                  <div className="mt-6 space-y-4 flex flex-col h-full">
 
                     {/* Cart Item */}
                     <div className="flex gap-3 border-b border-white/10 pb-4">
@@ -150,14 +170,15 @@ const Navbar = () => {
                     </div>
 
                     {/* Total */}
-                    <div className="flex justify-between font-semibold text-lg">
+                    <div className='mt-auto mb-5'>                      <div className="flex justify-between font-semibold text-lg">
                       <span>Total</span>
                       <span>₹1,19,999</span>
                     </div>
 
-                    <Button className="w-full">
-                      Checkout
-                    </Button>
+                      <Button className="w-full">
+                        Checkout
+                      </Button>
+                    </div>
 
                   </div>
                 </SheetContent>
@@ -264,25 +285,23 @@ const Navbar = () => {
           </div>
         </div>
 
-        {
-          location.pathname !== '/products' && (
-            <div className="border-t border-white/10 bg-zinc-950">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center gap-1 h-10 overflow-x-auto scrollbar-none">
-                  {categories.map((cat) => (
-                    <a
-                      key={cat.label}
-                      href={cat.href}
-                      className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all"
-                    >
-                      {cat.icon} {cat.label}
-                    </a>
-                  ))}
-                </div>
+        {!hideCategoryBar && (
+          <div className="border-t border-white/10 bg-zinc-950">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="scrollbar-none flex h-10 items-center gap-1 overflow-x-auto">
+                {categories.map((cat) => (
+                  <a
+                    key={cat.label}
+                    href={cat.href}
+                    className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
+                  >
+                    {cat.icon} {cat.label}
+                  </a>
+                ))}
               </div>
             </div>
-          )
-        }
+          </div>
+        )}
       </div>
 
       {mobileOpen && (
